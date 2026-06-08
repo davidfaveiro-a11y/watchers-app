@@ -295,11 +295,7 @@ async function markRehearsalPaid(id, button) {
 function renderData() {
   renderConcerts(demoData.concerts, true);
   renderRehearsals(demoData.rehearsals, true);
-  renderStreamingStats([
-    { id: "demo-spotify", platform: "spotify", period_start: "2026-05-01", period_end: "2026-05-31", streams: 8945 },
-    { id: "demo-apple", platform: "apple_music", period_start: "2026-05-01", period_end: "2026-05-31", streams: 2201 },
-    { id: "demo-youtube", platform: "youtube_music", period_start: "2026-05-01", period_end: "2026-05-31", streams: 1336 },
-  ], true);
+  renderStreamingStats([], true);
 
   document.querySelector("#file-list").innerHTML = demoData.files.map((item) => `
     <article class="file-item">
@@ -346,13 +342,8 @@ function renderStreamingStats(rows, isDemo = false) {
         <strong>${escapeHtml(info.label)} · ${Number(row.streams).toLocaleString("fr-FR")} écoutes</strong>
         <small>${formatShortDate(row.period_start)} au ${formatShortDate(row.period_end)}</small>
       </div>
-      ${isDemo ? "" : `<button class="delete-stream" type="button" data-delete-stream="${escapeHtml(row.id)}">Supprimer</button>`}
     </article>`;
   }).join("") || '<article class="activity-item"><div><strong>Aucun historique</strong></div></article>';
-
-  history.querySelectorAll("[data-delete-stream]").forEach((button) => {
-    button.addEventListener("click", () => deleteStreamingStat(button.dataset.deleteStream));
-  });
 }
 
 async function loadStreamingStats() {
@@ -366,17 +357,6 @@ async function loadStreamingStats() {
     return;
   }
   renderStreamingStats(data);
-}
-
-async function deleteStreamingStat(id) {
-  if (!supabaseClient || !currentUser) return;
-  const { error } = await supabaseClient.from("streaming_stats").delete().eq("id", id);
-  if (error) {
-    showToast("Cette donnée n'a pas pu être supprimée.");
-    return;
-  }
-  showToast("Donnée de streaming supprimée.");
-  await loadStreamingStats();
 }
 
 function setView(viewName) {
@@ -555,45 +535,6 @@ rehearsalForm.addEventListener("submit", async (event) => {
   await loadRehearsals();
 });
 
-const streamDialog = document.querySelector("#stream-dialog");
-const streamForm = document.querySelector("#stream-form");
-
-document.querySelector("#add-stream-button").addEventListener("click", () => streamDialog.showModal());
-document.querySelector("#close-stream-dialog").addEventListener("click", () => streamDialog.close());
-
-streamForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const form = new FormData(streamForm);
-  if (form.get("periodEnd") < form.get("periodStart")) {
-    showToast("La fin de période doit être après le début.");
-    return;
-  }
-  if (!supabaseClient || !currentUser) {
-    showToast("Connectez-vous avec un vrai compte pour enregistrer ces données.");
-    return;
-  }
-
-  const button = document.querySelector("#save-stream");
-  button.disabled = true;
-  button.textContent = "Enregistrement...";
-  const { error } = await supabaseClient.from("streaming_stats").insert({
-    platform: form.get("platform"),
-    period_start: form.get("periodStart"),
-    period_end: form.get("periodEnd"),
-    streams: Number(form.get("streams")),
-  });
-  button.disabled = false;
-  button.textContent = "Enregistrer les écoutes";
-
-  if (error) {
-    showToast("Les écoutes n'ont pas pu être enregistrées.");
-    return;
-  }
-  streamForm.reset();
-  streamDialog.close();
-  showToast("Données de streaming ajoutées.");
-  await loadStreamingStats();
-});
 
 document.querySelector("#notification-button").addEventListener("click", async () => {
   if (!("Notification" in window)) return showToast("Notifications non prises en charge sur cet appareil.");
