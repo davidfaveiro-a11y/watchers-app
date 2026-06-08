@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#09060d" />
+    <meta name="description" content="L'espace privé du groupe Watchers." />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css?v=7" />
+    <title>Watchers</title>
+  </head>
+  <body>
+    <div id="toast" class="toast" aria-live="polite"></div>
+
+    <main id="login-screen" class="login-screen">
+      <section class="login-card">
+        <img class="login-logo" src="./assets/watchers-logo.png?v=7" alt="Watchers" />
+
+        <div class="auth-tabs" role="tablist" aria-label="Choix du mode d'authentification">
+          <button id="login-tab" class="auth-tab active" type="button" role="tab" aria-selected="true">Connexion</button>
+          <button id="signup-tab" class="auth-tab" type="button" role="tab" aria-selected="false">Créer mon compte</button>
+        </div>
+
+        <form id="login-form">
+          <label for="email">Adresse e-mail</label>
+          <input id="email" name="email" type="email" autocomplete="email" placeholder="membre@watchers.fr" required />
+          <label for="password">Mot de passe</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+          <button class="primary-button" type="submit">Se connecter</button>
+        </form>
+        <form id="signup-form" class="hidden">
+          <label for="signup-name">Prénom</label>
+          <input id="signup-name" name="firstName" autocomplete="given-name" placeholder="David" required />
+          <label for="signup-email">Adresse e-mail autorisée</label>
+          <input id="signup-email" name="email" type="email" autocomplete="email" value="david.faveiro@gmail.com" required />
+          <label for="signup-password">Choisir un mot de passe</label>
+          <input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="8 caractères minimum" required />
+          <button class="primary-button" type="submit">Créer mon compte</button>
+        </form>
+        <button id="demo-button" class="text-button" type="button">Découvrir la version démo</button>
+        <p class="login-note">Accès réservé aux membres du groupe.</p>
+      </section>
+    </main>
+
+    <div id="app-shell" class="app-shell hidden">
+      <header class="topbar">
+        <div>
+          <img class="topbar-logo" src="./assets/watchers-logo.png?v=7" alt="Watchers" />
+          <h1 id="page-title">Salut, Alex</h1>
+        </div>
+        <button id="notification-button" class="icon-button" type="button" aria-label="Activer les notifications">
+          <span aria-hidden="true">●</span>
+          <span class="notification-dot"></span>
+        </button>
+        <button id="logout-button" class="icon-button logout-button" type="button" aria-label="Se déconnecter">↪</button>
+      </header>
+
+      <main class="content">
+        <section id="dashboard-view" class="view active">
+          <article class="hero-card">
+            <div class="hero-copy">
+              <p class="eyebrow">PROCHAIN RENDEZ-VOUS</p>
+              <h2>La Maroquinerie</h2>
+              <p>Vendredi 19 juin · 20:30</p>
+              <div class="tag-row">
+                <span class="tag tag-accent">Concert</span>
+                <span class="tag">Sono sur place</span>
+              </div>
+            </div>
+            <div class="date-block">
+              <strong>19</strong>
+              <span>JUIN</span>
+            </div>
+          </article>
+
+          <div class="section-heading">
+            <h2>À retenir</h2>
+            <span>Cette semaine</span>
+          </div>
+          <div class="quick-grid">
+            <button class="quick-card" data-target="rehearsals">
+              <span class="quick-icon coral">R</span>
+              <strong>Répète</strong>
+              <small>Mer. · Studio Bleu</small>
+            </button>
+            <button class="quick-card" data-target="drive">
+              <span class="quick-icon violet">D</span>
+              <strong>Drive</strong>
+              <small>3 nouveaux fichiers</small>
+            </button>
+            <button class="quick-card" data-target="stats">
+              <span class="quick-icon green">↗</span>
+              <strong>12,4 k</strong>
+              <small>Écoutes ce mois</small>
+            </button>
+            <button class="quick-card" data-target="sales">
+              <span class="quick-icon yellow">€</span>
+              <strong>1 840 €</strong>
+              <small>Chiffre d'affaires</small>
+            </button>
+          </div>
+
+          <div class="section-heading">
+            <h2>Activité récente</h2>
+            <button class="text-button compact" type="button">Tout voir</button>
+          </div>
+          <div class="activity-list">
+            <article class="activity-item">
+              <span class="avatar violet">JM</span>
+              <div><strong>Julie a ajouté 3 photos</strong><small>Drive · il y a 18 min</small></div>
+            </article>
+            <article class="activity-item">
+              <span class="avatar coral">TH</span>
+              <div><strong>Thomas a réglé la répète</strong><small>Studio Bleu · il y a 2 h</small></div>
+              <span class="status paid">Réglé</span>
+            </article>
+            <article class="activity-item">
+              <span class="avatar green">MC</span>
+              <div><strong>Marie a ajouté un concert</strong><small>Le Ferrailleur · hier</small></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="concerts-view" class="view">
+          <div class="section-heading large">
+            <div><p class="eyebrow">AGENDA</p><h2>Concerts</h2></div>
+            <button class="round-button" type="button" data-action="add">+</button>
+          </div>
+          <div id="concert-list" class="card-list"></div>
+        </section>
+
+        <section id="rehearsals-view" class="view">
+          <div class="section-heading large">
+            <div><p class="eyebrow">ORGANISATION</p><h2>Répètes</h2></div>
+            <button class="round-button" type="button" data-action="add">+</button>
+          </div>
+          <div id="rehearsal-list" class="card-list"></div>
+        </section>
+
+        <section id="drive-view" class="view">
+          <div class="section-heading large">
+            <div><p class="eyebrow">FICHIERS PARTAGÉS</p><h2>Google Drive</h2></div>
+            <a id="drive-link" class="round-button link" href="https://drive.google.com" target="_blank" rel="noreferrer">↗</a>
+          </div>
+          <article class="drive-banner">
+            <span class="drive-logo">▲</span>
+            <div><strong>Dossier Watchers</strong><small>Synchronisé avec Google Drive</small></div>
+            <span class="status paid">Connecté</span>
+          </article>
+          <div id="file-list" class="file-list"></div>
+        </section>
+
+        <section id="stats-view" class="view">
+          <div class="section-heading large">
+            <div><p class="eyebrow">AUDIENCE</p><h2>Streaming</h2></div>
+            <select aria-label="Période"><option>30 jours</option><option>Cette année</option></select>
+          </div>
+          <article class="metric-card featured">
+            <small>ÉCOUTES TOTALES</small><strong>12 482</strong><span>+18,4 % sur la période</span>
+            <div class="chart" aria-label="Graphique des écoutes">
+              <i style="height:32%"></i><i style="height:46%"></i><i style="height:40%"></i><i style="height:61%"></i>
+              <i style="height:55%"></i><i style="height:76%"></i><i style="height:69%"></i><i style="height:92%"></i>
+            </div>
+          </article>
+          <div class="platform-list">
+            <article><span class="platform spotify">S</span><div><strong>Spotify</strong><small>8 945 écoutes</small></div><b>71,7 %</b></article>
+            <article><span class="platform apple">A</span><div><strong>Apple Music</strong><small>2 201 écoutes</small></div><b>17,6 %</b></article>
+            <article><span class="platform youtube">Y</span><div><strong>YouTube Music</strong><small>1 336 écoutes</small></div><b>10,7 %</b></article>
+          </div>
+        </section>
+
+        <section id="sales-view" class="view">
+          <div class="section-heading large">
+            <div><p class="eyebrow">FINANCES</p><h2>Chiffre d'affaires</h2></div>
+            <button class="round-button" type="button" data-action="sale">+</button>
+          </div>
+          <article class="metric-card featured sales">
+            <small>TOTAL CETTE ANNÉE</small><strong>1 840 €</strong><span>CD, vinyles et merchandising</span>
+          </article>
+          <div class="sales-grid">
+            <article><small>CD & VINYLES</small><strong>1 120 €</strong><span>61 % du CA</span></article>
+            <article><small>MERCH</small><strong>720 €</strong><span>39 % du CA</span></article>
+          </div>
+          <div class="section-heading"><h2>Dernières ventes</h2></div>
+          <div class="activity-list">
+            <article class="activity-item"><span class="quick-icon yellow">€</span><div><strong>Merch · Concert Nantes</strong><small>2 juin 2026</small></div><b>+ 315 €</b></article>
+            <article class="activity-item"><span class="quick-icon coral">CD</span><div><strong>Vente en ligne</strong><small>29 mai 2026</small></div><b>+ 48 €</b></article>
+          </div>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="Navigation principale">
+        <button class="nav-item active" data-view="dashboard"><span>⌂</span><small>Accueil</small></button>
+        <button class="nav-item" data-view="concerts"><span>◉</span><small>Concerts</small></button>
+        <button class="nav-item" data-view="rehearsals"><span>◇</span><small>Répètes</small></button>
+        <button class="nav-item" data-view="drive"><span>△</span><small>Drive</small></button>
+        <button class="nav-item" data-view="stats"><span>↗</span><small>Chiffres</small></button>
+      </nav>
+    </div>
+
+    <dialog id="add-dialog">
+      <form method="dialog">
+        <button class="dialog-close" value="cancel" aria-label="Fermer">×</button>
+        <p class="eyebrow">NOUVEL ÉLÉMENT</p>
+        <h2>Ajout rapide</h2>
+        <label for="item-title">Titre</label>
+        <input id="item-title" placeholder="Nom ou description" />
+        <label for="item-date">Date</label>
+        <input id="item-date" type="datetime-local" />
+        <button id="save-item" class="primary-button" value="default">Enregistrer</button>
+      </form>
+    </dialog>
+
+    <script src="./config.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
