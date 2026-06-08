@@ -31,6 +31,14 @@ const bookingStatuses = {
   confirmed: "Validé",
 };
 
+const streamPlatforms = {
+  spotify: { label: "Spotify", initial: "S" },
+  apple_music: { label: "Apple Music", initial: "A" },
+  youtube_music: { label: "YouTube Music", initial: "Y" },
+  deezer: { label: "Deezer", initial: "D" },
+  other: { label: "Autre", initial: "+" },
+};
+
 async function initSupabase() {
   if (!config.supabaseUrl || !config.supabaseAnonKey) return;
   try {
@@ -57,6 +65,7 @@ function openApp(name = "Alex", user = null) {
   subscribeToUpdates();
   loadConcerts();
   loadRehearsals();
+  loadStreamingStats();
 }
 
 function closeApp() {
@@ -286,6 +295,11 @@ async function markRehearsalPaid(id, button) {
 function renderData() {
   renderConcerts(demoData.concerts, true);
   renderRehearsals(demoData.rehearsals, true);
+  renderStreamingStats([
+    { id: "demo-spotify", platform: "spotify", period_start: "2026-05-01", period_end: "2026-05-31", streams: 8945 },
+    { id: "demo-apple", platform: "apple_music", period_start: "2026-05-01", period_end: "2026-05-31", streams: 2201 },
+    { id: "demo-youtube", platform: "youtube_music", period_start: "2026-05-01", period_end: "2026-05-31", streams: 1336 },
+  ], true);
 
   document.querySelector("#file-list").innerHTML = demoData.files.map((item) => `
     <article class="file-item">
@@ -293,6 +307,76 @@ function renderData() {
       <div><strong>${item.name}</strong><small>${item.meta}</small></div>
       <span>›</span>
     </article>`).join("");
+}
+
+function formatShortDate(value) {
+  return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(new Date(`${value}T12:00:00`));
+}
+
+function renderStreamingStats(rows, isDemo = false) {
+  const total = rows.reduce((sum, row) => sum + Number(row.streams || 0), 0);
+  const grouped = rows.reduce((result, row) => {
+    result[row.platform] = (result[row.platform] || 0) + Number(row.streams || 0);
+    return result;
+  }, {});
+
+  document.querySelector("#stream-total").textContent = total.toLocaleString("fr-FR");
+  document.querySelector("#stream-chart").innerHTML = Object.entries(grouped).map(([platform, streams]) => {
+    const height = total ? Math.max(12, Math.round((streams / Math.max(...Object.values(grouped))) * 100)) : 12;
+    return `<i class="${escapeHtml(platform)}" style="height:${height}%" title="${escapeHtml(streamPlatforms[platform]?.label || platform)}"></i>`;
+  }).join("");
+
+  const platformList = document.querySelector("#platform-list");
+  platformList.innerHTML = Object.entries(grouped).sort((a, b) => b[1] - a[1]).map(([platform, streams]) => {
+    const info = streamPlatforms[platform] || streamPlatforms.other;
+    const percentage = total ? ((streams / total) * 100).toLocaleString("fr-FR", { maximumFractionDigits: 1 }) : "0";
+    return `<article>
+      <span class="platform ${escapeHtml(platform)}">${escapeHtml(info.initial)}</span>
+      <div><strong>${escapeHtml(info.label)}</strong><small>${streams.toLocaleString("fr-FR")} écoutes</small></div>
+      <b>${percentage} %</b>
+    </article>`;
+  }).join("") || '<article><div><strong>Aucune donnée</strong><small>Ajoutez votre premier relevé de streaming.</small></div></article>';
+
+  const history = document.querySelector("#stream-history");
+  history.innerHTML = [...rows].sort((a, b) => b.period_end.localeCompare(a.period_end)).map((row) => {
+    const info = streamPlatforms[row.platform] || streamPlatforms.other;
+    return `<article class="activity-item">
+      <span class="platform ${escapeHtml(row.platform)}">${escapeHtml(info.initial)}</span>
+      <div>
+        <strong>${escapeHtml(info.label)} · ${Number(row.streams).toLocaleString("fr-FR")} écoutes</strong>
+        <small>${formatShortDate(row.period_start)} au ${formatShortDate(row.period_end)}</small>
+      </div>
+      ${isDemo ? "" : `<button class="delete-stream" type="button" data-delete-stream="${escapeHtml(row.id)}">Supprimer</button>`}
+    </article>`;
+  }).join("") || '<article class="activity-item"><div><strong>Aucun historique</strong></div></article>';
+
+  history.querySelectorAll("[data-delete-stream]").forEach((button) => {
+    button.addEventListener("click", () => deleteStreamingStat(button.dataset.deleteStream));
+  });
+}
+
+async function loadStreamingStats() {
+  if (!supabaseClient || !currentUser) return;
+  const { data, error } = await supabaseClient
+    .from("streaming_stats")
+    .select("id,platform,period_start,period_end,streams,imported_at")
+    .order("period_end", { ascending: false });
+  if (error) {
+    showToast("Impossible de charger les données de streaming.");
+    return;
+  }
+  renderStreamingStats(data);
+}
+
+async function deleteStreamingStat(id) {
+  if (!supabaseClient || !currentUser) return;
+  const { error } = await supabaseClient.from("streaming_stats").delete().eq("id", id);
+  if (error) {
+    showToast("Cette donnée n'a pas pu être supprimée.");
+    return;
+  }
+  showToast("Donnée de streaming supprimée.");
+  await loadStreamingStats();
 }
 
 function setView(viewName) {
@@ -469,6 +553,46 @@ rehearsalForm.addEventListener("submit", async (event) => {
   rehearsalDialog.close();
   showToast("Répète ajoutée pour tout le groupe.");
   await loadRehearsals();
+});
+
+const streamDialog = document.querySelector("#stream-dialog");
+const streamForm = document.querySelector("#stream-form");
+
+document.querySelector("#add-stream-button").addEventListener("click", () => streamDialog.showModal());
+document.querySelector("#close-stream-dialog").addEventListener("click", () => streamDialog.close());
+
+streamForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(streamForm);
+  if (form.get("periodEnd") < form.get("periodStart")) {
+    showToast("La fin de période doit être après le début.");
+    return;
+  }
+  if (!supabaseClient || !currentUser) {
+    showToast("Connectez-vous avec un vrai compte pour enregistrer ces données.");
+    return;
+  }
+
+  const button = document.querySelector("#save-stream");
+  button.disabled = true;
+  button.textContent = "Enregistrement...";
+  const { error } = await supabaseClient.from("streaming_stats").insert({
+    platform: form.get("platform"),
+    period_start: form.get("periodStart"),
+    period_end: form.get("periodEnd"),
+    streams: Number(form.get("streams")),
+  });
+  button.disabled = false;
+  button.textContent = "Enregistrer les écoutes";
+
+  if (error) {
+    showToast("Les écoutes n'ont pas pu être enregistrées.");
+    return;
+  }
+  streamForm.reset();
+  streamDialog.close();
+  showToast("Données de streaming ajoutées.");
+  await loadStreamingStats();
 });
 
 document.querySelector("#notification-button").addEventListener("click", async () => {

@@ -7,7 +7,7 @@
     <meta name="description" content="L'espace privé du groupe Watchers." />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=11" />
+    <link rel="stylesheet" href="./styles.css?v=12" />
     <title>Watchers</title>
   </head>
   <body>
@@ -154,20 +154,17 @@
         <section id="stats-view" class="view">
           <div class="section-heading large">
             <div><p class="eyebrow">AUDIENCE</p><h2>Streaming</h2></div>
-            <select aria-label="Période"><option>30 jours</option><option>Cette année</option></select>
+            <button id="add-stream-button" class="round-button" type="button" aria-label="Ajouter des écoutes">+</button>
           </div>
           <article class="metric-card featured">
-            <small>ÉCOUTES TOTALES</small><strong>12 482</strong><span>+18,4 % sur la période</span>
-            <div class="chart" aria-label="Graphique des écoutes">
-              <i style="height:32%"></i><i style="height:46%"></i><i style="height:40%"></i><i style="height:61%"></i>
-              <i style="height:55%"></i><i style="height:76%"></i><i style="height:69%"></i><i style="height:92%"></i>
-            </div>
+            <small>ÉCOUTES ENREGISTRÉES</small>
+            <strong id="stream-total">0</strong>
+            <span id="stream-period-label">Toutes périodes confondues</span>
+            <div id="stream-chart" class="chart" aria-label="Graphique des écoutes"></div>
           </article>
-          <div class="platform-list">
-            <article><span class="platform spotify">S</span><div><strong>Spotify</strong><small>8 945 écoutes</small></div><b>71,7 %</b></article>
-            <article><span class="platform apple">A</span><div><strong>Apple Music</strong><small>2 201 écoutes</small></div><b>17,6 %</b></article>
-            <article><span class="platform youtube">Y</span><div><strong>YouTube Music</strong><small>1 336 écoutes</small></div><b>10,7 %</b></article>
-          </div>
+          <div id="platform-list" class="platform-list"></div>
+          <div class="section-heading"><h2>Historique des imports</h2></div>
+          <div id="stream-history" class="activity-list"></div>
         </section>
 
         <section id="sales-view" class="view">
@@ -290,7 +287,36 @@
       </form>
     </dialog>
 
+    <dialog id="stream-dialog">
+      <form id="stream-form">
+        <button id="close-stream-dialog" class="dialog-close" type="button" aria-label="Fermer">×</button>
+        <p class="eyebrow">NOUVEL IMPORT</p>
+        <h2>Ajouter des écoutes</h2>
+        <label for="stream-platform">Plateforme</label>
+        <select id="stream-platform" name="platform" required>
+          <option value="spotify">Spotify</option>
+          <option value="apple_music">Apple Music</option>
+          <option value="youtube_music">YouTube Music</option>
+          <option value="deezer">Deezer</option>
+          <option value="other">Autre</option>
+        </select>
+        <div class="form-grid">
+          <div>
+            <label for="stream-period-start">Début de période</label>
+            <input id="stream-period-start" name="periodStart" type="date" required />
+          </div>
+          <div>
+            <label for="stream-period-end">Fin de période</label>
+            <input id="stream-period-end" name="periodEnd" type="date" required />
+          </div>
+        </div>
+        <label for="stream-count">Nombre d’écoutes</label>
+        <input id="stream-count" name="streams" type="number" min="0" step="1" placeholder="12500" required />
+        <button id="save-stream" class="primary-button" type="submit">Enregistrer les écoutes</button>
+      </form>
+    </dialog>
+
     <script src="./config.js"></script>
-    <script type="module" src="./app.js?v=11"></script>
+    <script type="module" src="./app.js?v=12"></script>
   </body>
 </html>

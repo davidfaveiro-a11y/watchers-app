@@ -182,7 +182,15 @@ select { width: auto; min-height: 40px; }
 .chart i { flex: 1; min-height: 10%; border-radius: 5px 5px 2px 2px; background: var(--accent); opacity: .8; }
 .platform-list { margin-top: 12px; }
 .platform-list b { font-size: 12px; }
-.platform.spotify { background: #65d991; }.platform.apple { background: #eee; }.platform.youtube { background: #ff5656; }
+.platform.spotify { background: #65d991; }
+.platform.apple_music { background: #eee; }
+.platform.youtube_music { background: #ff5656; }
+.platform.deezer { background: #a855f7; color: white; }
+.platform.other { background: #71717a; color: white; }
+.delete-stream {
+  margin-left: auto; border: 1px solid rgba(239,68,68,.3); border-radius: 3px; padding: 6px 8px;
+  background: rgba(239,68,68,.08); color: #f87171; font-size: 10px; cursor: pointer;
+}
 .sales-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
 .sales-grid article { padding: 18px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); }
 .sales-grid strong { display: block; margin: 9px 0 3px; font-size: 23px; }

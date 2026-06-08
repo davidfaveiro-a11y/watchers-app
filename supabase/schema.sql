@@ -136,6 +136,7 @@ create policy "Members manage concerts" on public.concerts for all to authentica
 create policy "Members manage rehearsals" on public.rehearsals for all to authenticated using (true) with check (true);
 create policy "Members manage drive files" on public.drive_files for all to authenticated using (true) with check (true);
 create policy "Members read streaming stats" on public.streaming_stats for select to authenticated using (true);
+create policy "Members manage streaming stats" on public.streaming_stats for all to authenticated using (true) with check (true);
 create policy "Members manage sales" on public.sales for all to authenticated using (true) with check (true);
 
 alter publication supabase_realtime add table public.concerts;
