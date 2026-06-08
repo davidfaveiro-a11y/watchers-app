@@ -58,9 +58,19 @@ create table public.concerts (
   starts_at timestamptz not null,
   sound_system boolean not null default false,
   sound_notes text,
+  booking_status text not null default 'mail_sent'
+    check (booking_status in ('mail_sent', 'rejected', 'negotiating', 'confirmed')),
   created_by uuid references public.profiles(id),
   created_at timestamptz not null default now()
 );
+
+alter table public.concerts
+  add column if not exists booking_status text not null default 'mail_sent';
+
+alter table public.concerts drop constraint if exists concerts_booking_status_check;
+alter table public.concerts
+  add constraint concerts_booking_status_check
+  check (booking_status in ('mail_sent', 'rejected', 'negotiating', 'confirmed'));
 
 create table public.rehearsals (
   id uuid primary key default gen_random_uuid(),

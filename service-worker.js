@@ -1,4 +1,4 @@
-const CACHE_NAME = "watchers-v8";
+const CACHE_NAME = "watchers-v10";
 const APP_FILES = [
   "./",
   "./index.html",

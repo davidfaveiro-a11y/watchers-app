@@ -7,7 +7,7 @@
     <meta name="description" content="L'espace privé du groupe Watchers." />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="./styles.css?v=7" />
+    <link rel="stylesheet" href="./styles.css?v=9" />
     <title>Watchers</title>
   </head>
   <body>
@@ -125,7 +125,7 @@
         <section id="concerts-view" class="view">
           <div class="section-heading large">
             <div><p class="eyebrow">AGENDA</p><h2>Concerts</h2></div>
-            <button class="round-button" type="button" data-action="add">+</button>
+            <button id="add-concert-button" class="round-button" type="button" aria-label="Ajouter un concert">+</button>
           </div>
           <div id="concert-list" class="card-list"></div>
         </section>
@@ -199,20 +199,55 @@
       </nav>
     </div>
 
-    <dialog id="add-dialog">
-      <form method="dialog">
-        <button class="dialog-close" value="cancel" aria-label="Fermer">×</button>
-        <p class="eyebrow">NOUVEL ÉLÉMENT</p>
-        <h2>Ajout rapide</h2>
-        <label for="item-title">Titre</label>
-        <input id="item-title" placeholder="Nom ou description" />
-        <label for="item-date">Date</label>
-        <input id="item-date" type="datetime-local" />
-        <button id="save-item" class="primary-button" value="default">Enregistrer</button>
+    <dialog id="concert-dialog">
+      <form id="concert-form">
+        <button id="close-concert-dialog" class="dialog-close" type="button" aria-label="Fermer">×</button>
+        <p class="eyebrow">NOUVELLE DATE</p>
+        <h2>Ajouter un concert</h2>
+
+        <label for="concert-title">Nom du concert ou de la salle</label>
+        <input id="concert-title" name="title" placeholder="La Maroquinerie" required />
+
+        <div class="form-grid">
+          <div>
+            <label for="concert-venue">Lieu</label>
+            <input id="concert-venue" name="venue" placeholder="23 rue Boyer" required />
+          </div>
+          <div>
+            <label for="concert-city">Ville</label>
+            <input id="concert-city" name="city" placeholder="Paris" required />
+          </div>
+        </div>
+
+        <label for="concert-date">Date et heure</label>
+        <input id="concert-date" name="startsAt" type="datetime-local" required />
+
+        <label class="check-row" for="concert-technical">
+          <input id="concert-technical" name="needsTechnical" type="checkbox" />
+          <span>
+            <strong>Besoin de technique</strong>
+            <small>Sonorisation, backline ou technicien à prévoir</small>
+          </span>
+        </label>
+
+        <div id="technical-notes-group" class="hidden">
+          <label for="concert-technical-notes">Détails techniques</label>
+          <textarea id="concert-technical-notes" name="technicalNotes" placeholder="Console, micros, retours, backline..."></textarea>
+        </div>
+
+        <label for="concert-status">État</label>
+        <select id="concert-status" name="status" required>
+          <option value="mail_sent">Mail envoyé</option>
+          <option value="negotiating">En négociation</option>
+          <option value="confirmed">Validé</option>
+          <option value="rejected">Refusé</option>
+        </select>
+
+        <button id="save-concert" class="primary-button" type="submit">Enregistrer le concert</button>
       </form>
     </dialog>
 
     <script src="./config.js"></script>
-    <script type="module" src="./app.js"></script>
+    <script type="module" src="./app.js?v=9"></script>
   </body>
 </html>
