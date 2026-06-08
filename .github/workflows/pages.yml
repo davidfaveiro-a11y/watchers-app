@@ -1,4 +1,4 @@
-name: Deploy Watchers HQ to GitHub Pages
+name: Deploy Watchers to GitHub Pages
 
 on:
   push:
