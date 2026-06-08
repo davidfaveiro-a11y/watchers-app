@@ -79,10 +79,14 @@ create table public.rehearsals (
   ends_at timestamptz,
   amount numeric(10,2),
   payer_id uuid references public.profiles(id),
+  payer_name text,
   is_paid boolean not null default false,
   created_by uuid references public.profiles(id),
   created_at timestamptz not null default now()
 );
+
+alter table public.rehearsals
+  add column if not exists payer_name text;
 
 create table public.drive_files (
   id uuid primary key default gen_random_uuid(),

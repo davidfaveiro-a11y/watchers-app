@@ -56,6 +56,7 @@ function openApp(name = "Alex", user = null) {
   document.querySelector("#page-title").textContent = `Salut, ${name}`;
   subscribeToUpdates();
   loadConcerts();
+  loadRehearsals();
 }
 
 function closeApp() {
@@ -91,7 +92,10 @@ function subscribeToUpdates() {
       notifyUpdate("La liste des concerts a été mise à jour.");
       loadConcerts();
     })
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "rehearsals" }, () => notifyUpdate("Une nouvelle répète a été ajoutée."))
+    .on("postgres_changes", { event: "*", schema: "public", table: "rehearsals" }, () => {
+      notifyUpdate("La liste des répètes a été mise à jour.");
+      loadRehearsals();
+    })
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "drive_files" }, () => notifyUpdate("Un nouveau fichier a été déposé."))
     .subscribe();
 }
@@ -176,14 +180,112 @@ async function loadConcerts() {
   renderConcerts(data);
 }
 
+function formatRehearsalDate(startsAt, endsAt) {
+  const start = new Date(startsAt);
+  const end = new Date(endsAt);
+  if (Number.isNaN(start.getTime())) return { badge: "", detail: "" };
+  const date = new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "long" }).format(start);
+  const startTime = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(start);
+  const endTime = Number.isNaN(end.getTime()) ? "" : new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(end);
+  return {
+    badge: new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(start).replace(".", "").toUpperCase(),
+    detail: `${date} · ${startTime}${endTime ? `–${endTime}` : ""}`,
+  };
+}
+
+function renderRehearsals(rehearsals, isDemo = false) {
+  const normalized = isDemo
+    ? rehearsals.map((item, index) => ({
+        id: `demo-${index}`,
+        venue: item.title,
+        displayDate: item.city,
+        dateBadge: item.date,
+        payer_name: item.payer,
+        amount: 45,
+        is_paid: item.paid,
+      }))
+    : rehearsals.map((item) => {
+        const formatted = formatRehearsalDate(item.starts_at, item.ends_at);
+        return { ...item, displayDate: formatted.detail, dateBadge: formatted.badge };
+      });
+
+  const list = document.querySelector("#rehearsal-list");
+  if (!normalized.length) {
+    list.innerHTML = '<article class="event-card"><p>Aucune répète pour le moment. Ajoutez la première session.</p></article>';
+    return;
+  }
+
+  list.innerHTML = normalized.map((item) => `
+    <article class="event-card">
+      <header>
+        <div><h3>${escapeHtml(item.venue)}</h3><p>${escapeHtml(item.displayDate)}</p></div>
+        <span class="tag">${escapeHtml(item.dateBadge)}</span>
+      </header>
+      <div class="rehearsal-details">
+        <span>Payeur : ${escapeHtml(item.payer_name || "Non défini")}</span>
+        <span>${Number(item.amount || 0).toLocaleString("fr-FR", { style: "currency", currency: "EUR" })}</span>
+      </div>
+      <footer>
+        <span>${item.is_paid ? "Paiement effectué" : "Paiement en attente"}</span>
+        ${item.is_paid
+          ? '<span class="status paid">Réglé</span>'
+          : `<button class="status status-button pending" type="button" data-mark-paid="${escapeHtml(item.id)}">À régler</button>`}
+      </footer>
+    </article>`).join("");
+
+  list.querySelectorAll("[data-mark-paid]").forEach((button) => {
+    button.addEventListener("click", () => markRehearsalPaid(button.dataset.markPaid, button));
+  });
+}
+
+async function loadRehearsals() {
+  if (!supabaseClient || !currentUser) {
+    renderRehearsals(demoData.rehearsals, true);
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("rehearsals")
+    .select("id,venue,starts_at,ends_at,amount,payer_name,is_paid,created_at")
+    .order("starts_at", { ascending: true });
+
+  if (error) {
+    renderRehearsals(demoData.rehearsals, true);
+    showToast(error.message.includes("payer_name") ? "La mise à jour SQL Répètes reste à appliquer." : "Impossible de charger les répètes.");
+    return;
+  }
+
+  renderRehearsals(data);
+}
+
+async function markRehearsalPaid(id, button) {
+  if (!supabaseClient || !currentUser || id.startsWith("demo-")) {
+    button.textContent = "Réglé";
+    button.classList.remove("pending", "status-button");
+    button.classList.add("paid");
+    button.removeAttribute("data-mark-paid");
+    button.disabled = true;
+    showToast("Statut modifié dans la version démo.");
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Mise à jour...";
+  const { error } = await supabaseClient.from("rehearsals").update({ is_paid: true }).eq("id", id);
+  if (error) {
+    button.disabled = false;
+    button.textContent = "À régler";
+    showToast("Le règlement n'a pas pu être mis à jour.");
+    return;
+  }
+
+  showToast("La répète est maintenant réglée.");
+  await loadRehearsals();
+}
+
 function renderData() {
   renderConcerts(demoData.concerts, true);
-
-  document.querySelector("#rehearsal-list").innerHTML = demoData.rehearsals.map((item) => `
-    <article class="event-card">
-      <header><div><h3>${item.title}</h3><p>${item.city}</p></div><span class="tag">${item.date}</span></header>
-      <footer><span>À régler par <strong>${item.payer}</strong></span><span class="status ${item.paid ? "paid" : "pending"}">${item.paid ? "Réglé" : "À régler"}</span></footer>
-    </article>`).join("");
+  renderRehearsals(demoData.rehearsals, true);
 
   document.querySelector("#file-list").innerHTML = demoData.files.map((item) => `
     <article class="file-item">
@@ -317,6 +419,56 @@ concertForm.addEventListener("submit", async (event) => {
   concertDialog.close();
   showToast("Concert ajouté pour tout le groupe.");
   await loadConcerts();
+});
+
+const rehearsalDialog = document.querySelector("#rehearsal-dialog");
+const rehearsalForm = document.querySelector("#rehearsal-form");
+
+document.querySelector("#add-rehearsal-button").addEventListener("click", () => rehearsalDialog.showModal());
+document.querySelector("#close-rehearsal-dialog").addEventListener("click", () => rehearsalDialog.close());
+
+rehearsalForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(rehearsalForm);
+  const startsAt = new Date(form.get("startsAt"));
+  const endsAt = new Date(form.get("endsAt"));
+
+  if (endsAt <= startsAt) {
+    showToast("L'heure de fin doit être après le début.");
+    return;
+  }
+
+  if (!supabaseClient || !currentUser) {
+    showToast("Connectez-vous avec un vrai compte pour partager cette répète.");
+    return;
+  }
+
+  const payload = {
+    venue: form.get("venue").trim(),
+    starts_at: startsAt.toISOString(),
+    ends_at: endsAt.toISOString(),
+    amount: Number(form.get("amount")),
+    payer_name: form.get("payerName").trim(),
+    is_paid: form.get("isPaid") === "on",
+    created_by: currentUser.id,
+  };
+
+  const saveButton = document.querySelector("#save-rehearsal");
+  saveButton.disabled = true;
+  saveButton.textContent = "Enregistrement...";
+  const { error } = await supabaseClient.from("rehearsals").insert(payload);
+  saveButton.disabled = false;
+  saveButton.textContent = "Enregistrer la répète";
+
+  if (error) {
+    showToast(error.message.includes("payer_name") ? "Appliquez d'abord la migration SQL Répètes." : "La répète n'a pas pu être enregistrée.");
+    return;
+  }
+
+  rehearsalForm.reset();
+  rehearsalDialog.close();
+  showToast("Répète ajoutée pour tout le groupe.");
+  await loadRehearsals();
 });
 
 document.querySelector("#notification-button").addEventListener("click", async () => {

@@ -142,6 +142,13 @@ input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(168,85,247
 .status { margin-left: auto; padding: 5px 7px; border-radius: 7px; font-size: 9px; font-weight: 900; text-transform: uppercase; }
 .status.paid { background: rgba(139,92,246,.16); color: #c4b5fd; }
 .status.pending { background: rgba(217,70,239,.13); color: #f0abfc; }
+.status-button { border: 1px solid rgba(217,70,239,.36); cursor: pointer; transition: transform .16s ease, background .16s ease; }
+.status-button:hover, .status-button:focus-visible { transform: translateY(-1px); background: rgba(217,70,239,.25); }
+.rehearsal-details { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.rehearsal-details span {
+  padding: 6px 9px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted);
+  font-size: 10px; font-weight: 700;
+}
 
 .event-card { padding: 17px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface); }
 .event-card header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
